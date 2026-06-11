@@ -83,9 +83,15 @@ function AddMatchForm() {
                 kFactor,
                 formData.winnerScore,
                 formData.loserScore,
-                Math.max(0, winner.streak), // Only positive streaks count for bonus
-                winner.totalMatches, // Winner's matches played (for placement multiplier)
-                loser.totalMatches // Loser's matches played (for placement multiplier)
+
+                Math.max(0, winner.streak), // winner streak
+                Math.max(0, loser.streak),  // loser streak
+
+                winner.rank,
+                loser.rank,
+
+                winner.totalMatches,
+                loser.totalMatches
             );
 
             // Create match record
@@ -104,6 +110,7 @@ function AddMatchForm() {
                 eloChange: eloResult.eloChange,
                 dominantWinBonus: eloResult.dominantWinBonus || 0,
                 streakBonus: eloResult.streakBonus || 0,
+                bountyBonus: eloResult.bountyBonus || 0,
                 date: new Date(),
                 duration: 30,
                 matchType: MatchType.RANKED
