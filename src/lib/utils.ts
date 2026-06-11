@@ -14,50 +14,115 @@ export function calculateElo(
   winnerScore: number = 2,
   loserScore: number = 0,
   winnerStreak: number = 0,
+  loserStreak: number = 0,
+  winnerRank: number = 999,
+  loserRank: number = 999,
   winnerMatchesPlayed: number = 0,
   loserMatchesPlayed: number = 0
 ): EloCalculation {
+
   // Expected scores
-  const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
-  const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
+  const expectedWinner =
+    1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+
+  const expectedLoser =
+    1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
 
   // Base ELO change
-  let baseWinnerChange = kFactor * (1 - expectedWinner);
-  let baseLoserChange = kFactor * (0 - expectedLoser);
+  let baseWinnerChange =
+    kFactor * (1 - expectedWinner);
 
-  // Placement match multipliers (first 5 games)
+  let baseLoserChange =
+    kFactor * (0 - expectedLoser);
+
+  // Placement match multipliers
   if (winnerMatchesPlayed < 5) {
-    baseWinnerChange *= 5; // 5x ELO gain for placement matches
+    baseWinnerChange *= 5;
   }
+
   if (loserMatchesPlayed < 5) {
-    baseLoserChange *= 2; // 2x ELO loss for placement matches
+    baseLoserChange *= 2;
   }
 
-  // Bonus for 2-0 victory (dominant win)
+  // Bonus for 2-0 victory
   let dominantWinBonus = 0;
+
   if (winnerScore === 2 && loserScore === 0) {
-    dominantWinBonus = Math.round(kFactor * 0.15); // 15% bonus for 2-0
+    dominantWinBonus =
+      Math.round(kFactor * 0.15);
   }
 
-  // Win streak bonus (increases with longer streaks)
+  // Reduced streak bonus
   let streakBonus = 0;
+
   if (winnerStreak > 0) {
-    // Bonus increases with streak length, capped at 10 games
-    const streakMultiplier = Math.min(winnerStreak, 10) * 0.05; // 5% per game in streak, max 50%
-    streakBonus = Math.round(kFactor * streakMultiplier);
+    const streakMultiplier =
+      Math.min(winnerStreak, 10) * 0.025;
+
+    streakBonus =
+      Math.round(kFactor * streakMultiplier);
   }
 
-  // Apply bonuses to winner
-  const totalWinnerChange = Math.round(baseWinnerChange + dominantWinBonus + streakBonus);
-  const newWinnerElo = Math.round(winnerElo + totalWinnerChange);
-  const newLoserElo = Math.round(loserElo + baseLoserChange);
+  // Bounty system
+  let bountyBonus = 0;
+
+  if (loserStreak >= 3) {
+
+    if (loserRank === 1) {
+
+      bountyBonus =
+        Math.min(
+          9 + loserStreak * 2,
+          30
+        );
+
+    } else if (loserRank === 2) {
+
+      bountyBonus =
+        Math.min(
+          4 + loserStreak * 2,
+          20
+        );
+
+    } else if (loserRank === 3) {
+
+      bountyBonus =
+        Math.min(
+          loserStreak + 2,
+          15
+        );
+
+    }
+
+  }
+
+  // Final ELO gain
+  const totalWinnerChange =
+    Math.round(
+      baseWinnerChange +
+      dominantWinBonus +
+      streakBonus +
+      bountyBonus
+    );
+
+  const newWinnerElo =
+    Math.round(
+      winnerElo + totalWinnerChange
+    );
+
+  // Loser does NOT lose bounty
+  const newLoserElo =
+    Math.round(
+      loserElo + baseLoserChange
+    );
 
   return {
     newWinnerElo,
     newLoserElo,
     eloChange: totalWinnerChange,
     dominantWinBonus,
-    streakBonus
+    streakBonus,
+    bountyBonus
   };
 }
 
